@@ -60,11 +60,15 @@ export class UsersService {
         correlationId: context.correlationId,
       });
 
-      await this.messagingService.publish(USER_TOPICS.USER_CREATED, {
-        userId: newUser.id,
-        email: newUser.email,
-        name: newUser.name,
-      });
+      await this.messagingService.publish(
+        USER_TOPICS.USER_CREATED,
+        {
+          userId: newUser.id,
+          email: newUser.email,
+          name: newUser.name,
+        },
+        context.correlationId,
+      );
 
       return newUser;
     } catch (error) {
@@ -251,9 +255,13 @@ export class UsersService {
         correlationId: context.correlationId,
       });
 
-      await this.messagingService.publish(USER_TOPICS.USER_DELETED, {
-        userId: deletedUser.id,
-      });
+      await this.messagingService.publish(
+        USER_TOPICS.USER_DELETED,
+        {
+          userId: deletedUser.id,
+        },
+        context.correlationId,
+      );
 
       return deletedUser;
     } catch (error) {

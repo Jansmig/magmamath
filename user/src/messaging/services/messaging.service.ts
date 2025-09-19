@@ -85,7 +85,11 @@ export class MessagingService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async publish(topic: string, payload: Record<string, any>): Promise<void> {
+  async publish(
+    topic: string,
+    payload: Record<string, any>,
+    correlationId?: string,
+  ): Promise<void> {
     if (!this.isConnected || !this.channel) {
       this.logger.error('Cannot publish message: not connected to RabbitMQ');
       throw new Error('MessagingService is not connected to RabbitMQ');
@@ -93,7 +97,7 @@ export class MessagingService implements OnModuleInit, OnModuleDestroy {
 
     const nestMessage = {
       pattern: topic,
-      data: payload,
+      data: { ...payload, ...(correlationId && { correlationId }) },
     };
 
     const message = Buffer.from(JSON.stringify(nestMessage));
@@ -113,9 +117,16 @@ export class MessagingService implements OnModuleInit, OnModuleDestroy {
         throw new Error('Failed to publish message to exchange');
       }
 
-      this.logger.log(`Published message to topic ${topic}`);
+      this.logger.log(`Published message to topic ${topic}`, {
+        topic,
+        correlationId,
+      });
     } catch (error) {
-      this.logger.error(`Failed to publish message to topic ${topic}:`, error);
+      this.logger.error(`Failed to publish message to topic ${topic}:`, {
+        topic,
+        correlationId,
+        error,
+      });
       throw error;
     }
   }

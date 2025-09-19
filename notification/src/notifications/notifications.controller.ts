@@ -14,15 +14,14 @@ export class NotificationsController {
   @MessagePattern('user.created')
   async handleUserCreatedEvent(
     @Payload() data: any,
-    @Ctx() context: RmqContext,
+    @Ctx() rmqContext: RmqContext,
   ): Promise<void> {
     try {
       console.log('Received user created event');
       console.log(data);
-      console.log('Context:', context.getPattern());
       console.log('Sending welcome email to user');
 
-      context.getChannelRef().ack(context.getMessage());
+      rmqContext.getChannelRef().ack(rmqContext.getMessage());
     } catch (error) {
       console.error('Error processing user created event:', error);
     }
@@ -31,15 +30,14 @@ export class NotificationsController {
   @MessagePattern('user.deleted')
   async handleUserDeletedEvent(
     @Payload() data: any,
-    @Ctx() context: RmqContext,
+    @Ctx() rmqContext: RmqContext,
   ): Promise<void> {
     try {
       console.log('Received user deleted event');
       console.log(data);
-      console.log('Context:', context.getPattern());
       console.log('Sending goodbye email to user');
 
-      context.getChannelRef().ack(context.getMessage());
+      rmqContext.getChannelRef().ack(rmqContext.getMessage());
     } catch (error) {
       console.error('Error processing user deleted event:', error);
     }
