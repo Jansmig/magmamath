@@ -104,3 +104,79 @@ You can test various error scenarios:
 2. Login with:
    - Username: `admin`
    - Password: `password123`
+
+## Important Notes
+
+### Event-Driven Architecture Considerations
+
+In a production microservices environment, there should be a **separate broker package** containing all event interfaces, topics, and messaging contracts that can be shared across microservices. This package would serve as a single source of truth for inter-service communication definitions.
+
+#### Ideal Architecture Pattern
+
+**Broker Package Structure:**
+
+```
+@company/messaging-contracts/
+├── user/
+│   ├── events/
+│   │   ├── user-created.event.ts
+│   │   ├── user-updated.event.ts
+│   │   └── user-deleted.event.ts
+│   └── topics/
+│       └── user.topics.ts
+└── index.ts
+```
+
+#### Implementation Across Microservices
+
+**User Microservice (Publisher):**
+
+```typescript
+import { UserCreatedEvent } from '@company/messaging-contracts/user/events/user-created.event';
+import { USER_TOPICS } from '@company/messaging-contracts/user/topics/user.topics';
+
+// In user service
+async createUser(userData: CreateUserDto): Promise<User> {
+  const user = await this.repository.save(userData);
+
+  // Publish event with strongly typed payload
+  const event: UserCreatedEvent = {
+    userId: user.id,
+    email: user.email,
+    name: user.name,
+    correlationId: context.correlationId,
+  };
+
+  await this.messagingService.publish(USER_TOPICS.USER_CREATED, event);
+  return user;
+}
+```
+
+**Notification Microservice (Consumer):**
+
+```typescript
+import { UserCreatedEvent } from '@company/messaging-contracts/user/events/user-created.event';
+import { USER_TOPICS } from '@company/messaging-contracts/user/topics/user.topics';
+
+// In notification controller
+@MessagePattern(USER_TOPICS.USER_CREATED)
+async handleUserCreated(event: UserCreatedEvent): Promise<void> {
+  // Type-safe event handling
+  await this.notificationService.sendWelcomeEmail({
+    userId: event.userId,
+    email: event.email,
+    name: event.name,
+  });
+}
+```
+
+#### Why It's Not Implemented Here
+
+This pattern was **deliberately omitted** from this exercise because it would require additional package management, publishing, and dependency resolution or workarounds like manually using yalc
+
+#### To implement this pattern:
+
+1. Create a new npm package (e.g., `@magmamath/messaging-contracts`)
+2. Move all event interfaces and topic definitions to this package
+3. Publish the package to a registry (npm, private registry)
+4. Update each microservice to import from the shared package

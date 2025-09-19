@@ -20,6 +20,17 @@ import { Context } from '../shared/context';
 
 const DEFAULT_PAGE_LIMIT = 3;
 
+// IMPORTANT:
+export interface UserCreatedEvent {
+  userId: string;
+  email: string;
+  name: string;
+}
+
+export interface UserDeletedEvent {
+  userId: string;
+}
+
 @Injectable()
 export class UsersService {
   // As mentioned earlier, logger could be shared in some common library and injected as a service. Here the nest.js logger is used for simplicity.
@@ -59,7 +70,13 @@ export class UsersService {
         correlationId: context.correlationId,
       });
 
-      await this.notifyUserCreated(newUser.id, email, name, context);
+      const event: UserCreatedEvent = {
+        userId: newUser.id,
+        email,
+        name,
+      };
+
+      await this.notifyUserCreated(event, context);
 
       return newUser;
     } catch (error) {
@@ -245,7 +262,8 @@ export class UsersService {
         correlationId: context.correlationId,
       });
 
-      await this.notifyUserDeleted(deletedUser.id, context);
+      const event: UserDeletedEvent = { userId: deletedUser.id };
+      await this.notifyUserDeleted(event, context);
 
       return deletedUser;
     } catch (error) {
@@ -263,26 +281,27 @@ export class UsersService {
   }
 
   async notifyUserCreated(
-    userId: string,
-    email: string,
-    name: string,
+    event: UserCreatedEvent,
     context: Context,
   ): Promise<void> {
     await this.messagingService.publish(
       USER_TOPICS.USER_CREATED,
       {
-        userId,
-        email,
-        name,
+        userId: event.userId,
+        email: event.email,
+        name: event.name,
       },
       context.correlationId,
     );
   }
 
-  async notifyUserDeleted(userId: string, context: Context): Promise<void> {
+  async notifyUserDeleted(
+    event: UserDeletedEvent,
+    context: Context,
+  ): Promise<void> {
     await this.messagingService.publish(
       USER_TOPICS.USER_DELETED,
-      { userId },
+      { userId: event.userId },
       context.correlationId,
     );
   }
