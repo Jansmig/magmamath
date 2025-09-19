@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/require-await */
 import { Controller } from '@nestjs/common';
 import {
@@ -14,9 +16,16 @@ export class NotificationsController {
     @Payload() data: any,
     @Ctx() context: RmqContext,
   ): Promise<void> {
-    console.log('Received user created event');
-    console.log(data);
-    console.log('Context:', context.getPattern());
+    try {
+      console.log('Received user created event');
+      console.log(data);
+      console.log('Context:', context.getPattern());
+      console.log('Sending welcome email to user');
+
+      context.getChannelRef().ack(context.getMessage());
+    } catch (error) {
+      console.error('Error processing user created event:', error);
+    }
   }
 
   @MessagePattern('user.deleted')
@@ -24,8 +33,15 @@ export class NotificationsController {
     @Payload() data: any,
     @Ctx() context: RmqContext,
   ): Promise<void> {
-    console.log('Received user deleted event');
-    console.log(data);
-    console.log('Context:', context.getPattern());
+    try {
+      console.log('Received user deleted event');
+      console.log(data);
+      console.log('Context:', context.getPattern());
+      console.log('Sending goodbye email to user');
+
+      context.getChannelRef().ack(context.getMessage());
+    } catch (error) {
+      console.error('Error processing user deleted event:', error);
+    }
   }
 }
