@@ -18,7 +18,7 @@ import { Context } from '../shared/context';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @Post('/create-user')
+  @Post()
   async create(@Body() createUserDto: CreateUserDto) {
     const user = await this.usersService.createUser(
       createUserDto,
