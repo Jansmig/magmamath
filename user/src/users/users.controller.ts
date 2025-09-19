@@ -11,6 +11,8 @@ import {
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { randomUUID } from 'node:crypto';
+import { Context } from '../shared/context';
 
 @Controller('users')
 export class UsersController {
@@ -18,7 +20,10 @@ export class UsersController {
 
   @Post('/create-user')
   async create(@Body() createUserDto: CreateUserDto) {
-    const user = await this.usersService.createUser(createUserDto);
+    const user = await this.usersService.createUser(
+      createUserDto,
+      this.getContext(),
+    );
     return {
       success: true,
       message: 'User created successfully',
@@ -29,7 +34,10 @@ export class UsersController {
   @Get()
   async findMany(@Query('page') page?: string) {
     const pageNumber = page ? parseInt(page, 10) : 1;
-    const result = await this.usersService.findMany(pageNumber);
+    const result = await this.usersService.findMany(
+      pageNumber,
+      this.getContext(),
+    );
     return {
       success: true,
       message: 'Users retrieved successfully',
@@ -39,7 +47,7 @@ export class UsersController {
 
   @Get(':id')
   async findOne(@Param('id') id: string) {
-    const user = await this.usersService.findOne(id);
+    const user = await this.usersService.findOne(id, this.getContext());
     return {
       success: true,
       message: 'User retrieved successfully',
@@ -49,7 +57,11 @@ export class UsersController {
 
   @Patch(':id')
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto) {
-    const user = await this.usersService.updateOne(id, updateUserDto);
+    const user = await this.usersService.updateOne(
+      id,
+      updateUserDto,
+      this.getContext(),
+    );
     return {
       success: true,
       message: 'User updated successfully',
@@ -59,11 +71,18 @@ export class UsersController {
 
   @Delete(':id')
   async remove(@Param('id') id: string) {
-    const user = await this.usersService.removeOne(id);
+    const user = await this.usersService.removeOne(id, this.getContext());
     return {
       success: true,
       message: 'User deleted successfully',
       data: user,
+    };
+  }
+
+  // In real application there would be some context available with properties such as correlationId allowing for tracking entire request life cycle. It would be generated in some Gateway and passed further to the service. As there is no Gateway in this example, it is generated here for the example purposes. Ideally both Logger (injectable service) and Context interface would be available in some company-wide library.
+  private getContext(): Context {
+    return {
+      correlationId: randomUUID(),
     };
   }
 }
