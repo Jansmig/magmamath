@@ -8,12 +8,19 @@ services:
       MONGO_INITDB_ROOT_USERNAME: admin
       MONGO_INITDB_ROOT_PASSWORD: password123
       MONGO_INITDB_DATABASE: magmamath
+    command: ["mongod", "--quiet", "--logpath", "/dev/null"]
     ports:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
     networks:
       - magmamath-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # RabbitMQ Message Broker
   rabbitmq:
@@ -32,10 +39,11 @@ services:
     networks:
       - magmamath-network
     healthcheck:
-      test: rabbitmq-diagnostics -q ping
-      interval: 30s
-      timeout: 30s
-      retries: 3
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   # User Microservice
   user-service:
@@ -56,8 +64,10 @@ services:
     volumes:
       - ./user/src:/usr/src/app/src
     depends_on:
-      - mongodb
-      - rabbitmq
+      mongodb:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - magmamath-network
     command: npm run start:dev
@@ -73,12 +83,15 @@ services:
       - NODE_ENV=development
       - PORT=3001
       - RABBITMQ_URL=amqp://admin:password123@rabbitmq:5672
+      - RABBITMQ_EXCHANGE=magma
+      - RABBITMQ_EXCHANGE_TYPE=topic
     ports:
       - "3001:3001"
     volumes:
       - ./notification/src:/usr/src/app/src
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     networks:
       - magmamath-network
     command: npm run start:dev

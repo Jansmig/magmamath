@@ -10,7 +10,6 @@ import {
 } from '@nestjs/common';
 import * as amqp from 'amqplib';
 import type { MessagingConfig } from '../config/messaging.config';
-import { BaseEvent } from '../interfaces/events.interface';
 import { randomUUID } from 'crypto';
 
 @Injectable()
@@ -92,12 +91,12 @@ export class MessagingService implements OnModuleInit, OnModuleDestroy {
       throw new Error('MessagingService is not connected to RabbitMQ');
     }
 
-    const event: BaseEvent = {
-      eventId: randomUUID(),
-      payload,
+    const nestMessage = {
+      pattern: topic,
+      data: payload,
     };
 
-    const message = Buffer.from(JSON.stringify(event));
+    const message = Buffer.from(JSON.stringify(nestMessage));
 
     try {
       const published = this.channel.publish(
@@ -106,7 +105,7 @@ export class MessagingService implements OnModuleInit, OnModuleDestroy {
         message,
         {
           persistent: true,
-          messageId: event.eventId,
+          messageId: randomUUID(),
         },
       );
 
@@ -114,11 +113,9 @@ export class MessagingService implements OnModuleInit, OnModuleDestroy {
         throw new Error('Failed to publish message to exchange');
       }
 
-      this.logger.log(
-        `Published event with ID ${event.eventId} to topic ${topic}`,
-      );
+      this.logger.log(`Published message to topic ${topic}`);
     } catch (error) {
-      this.logger.error(`Failed to publish event to topic ${topic}:`, error);
+      this.logger.error(`Failed to publish message to topic ${topic}:`, error);
       throw error;
     }
   }
