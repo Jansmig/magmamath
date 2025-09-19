@@ -13,7 +13,9 @@ import {
 export class NotificationsController {
   @MessagePattern('user.created')
   async handleUserCreatedEvent(
-    @Payload() data: any, // please see the explanation why 'any' is used.
+    @Payload() data: any,
+    // please see the explanation why 'any' is used:
+    // https://github.com/Jansmig/magmamath/blob/main/README.md#event-driven-architecture-considerations
     @Ctx() rmqContext: RmqContext,
   ): Promise<void> {
     try {
@@ -29,7 +31,9 @@ export class NotificationsController {
 
   @MessagePattern('user.deleted')
   async handleUserDeletedEvent(
-    @Payload() data: any, // please see the explanation why 'any' is used.
+    @Payload() data: any,
+    // please see the explanation why 'any' is used:
+    // https://github.com/Jansmig/magmamath/blob/main/README.md#event-driven-architecture-considerations
     @Ctx() rmqContext: RmqContext,
   ): Promise<void> {
     try {

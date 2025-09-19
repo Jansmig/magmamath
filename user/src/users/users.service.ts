@@ -20,7 +20,8 @@ import { Context } from '../shared/context';
 
 const DEFAULT_PAGE_LIMIT = 3;
 
-// IMPORTANT:
+// please see the explanation where these interfaces should be located:
+// https://github.com/Jansmig/magmamath/blob/main/README.md#event-driven-architecture-considerations
 export interface UserCreatedEvent {
   userId: string;
   email: string;
