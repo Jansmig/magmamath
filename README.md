@@ -180,3 +180,54 @@ This pattern was **deliberately omitted** from this exercise because it would re
 2. Move all event interfaces and topic definitions to this package
 3. Publish the package to a registry (npm, private registry)
 4. Update each microservice to import from the shared package
+
+### Testing
+
+Testing was omitted due to lack of time.
+
+#### Unit Testing Considerations
+
+Current codebase has limited business logic. In my opinion unit tests could be applied in:
+
+- **Data mappers**: Testing the transformation between DTOs, domain objects, and database schemas
+- **Validation logic**: Ensuring custom validators (like `IsMongoId`) work correctly
+
+Although there is no much need for them in general.
+
+**Why minimal unit testing is acceptable here:**
+
+- Most logic is straightforward CRUD operations
+- Heavy reliance on framework features (NestJS, Mongoose) that are already tested
+- Domain logic is minimal in this example application
+
+#### Integration Testing Strategy
+
+Integration tests would provide the most value for this microservices architecture, as they can verify the complete workflow and inter-service communication:
+
+**Proposed Testing Infrastructure:**
+
+- MongoHelper Class to connect with the database, retreive data etc.
+- RabbitMQHelper Class for sending messages and consuming messages from certain topics.
+
+**Test Scenarios to Implement:**
+
+**Happy Path Tests:**
+
+- Create user → Verify database entry → Verify event publication
+- Retrieve user by ID → Verify correct data returned
+- Update user → Verify database changes → Verify update event
+- Delete user → Verify removal from database → Verify deletion event
+- List users with pagination → Verify correct data and pagination metadata
+
+**Error Scenario Tests:**
+
+- Create user with duplicated email → Verify error response and no database entry
+- Retrieve non-existent user → Verify 404 response
+- Update user with invalid data → Verify validation errors
+- Update user with duplicated email → Verify conflict error
+- Database connection failure → Verify proper error handling
+
+**Inter-service Communication Tests:**
+
+- User creation → Verify notification service receives event
+- Event format validation → Ensure events match expected schemas
