@@ -18,7 +18,6 @@ import { MessagingService } from '../messaging/services/messaging.service';
 import { USER_TOPICS } from '../messaging/topics/user.topics';
 import { Context } from '../shared/context';
 
-// this could be configured in some config
 const DEFAULT_PAGE_LIMIT = 3;
 
 @Injectable()
@@ -60,15 +59,7 @@ export class UsersService {
         correlationId: context.correlationId,
       });
 
-      await this.messagingService.publish(
-        USER_TOPICS.USER_CREATED,
-        {
-          userId: newUser.id,
-          email: newUser.email,
-          name: newUser.name,
-        },
-        context.correlationId,
-      );
+      await this.notifyUserCreated(newUser.id, email, name, context);
 
       return newUser;
     } catch (error) {
@@ -123,6 +114,7 @@ export class UsersService {
 
   async findMany(
     page: number = 1,
+    limit: number = DEFAULT_PAGE_LIMIT,
     context: Context,
   ): Promise<PaginatedResult<User>> {
     this.logger.debug(`Finding many users`, {
@@ -131,8 +123,6 @@ export class UsersService {
     });
 
     try {
-      const limit = DEFAULT_PAGE_LIMIT;
-
       if (page < 1) {
         this.logger.warn(`Invalid page number provided`, {
           page,
@@ -255,13 +245,7 @@ export class UsersService {
         correlationId: context.correlationId,
       });
 
-      await this.messagingService.publish(
-        USER_TOPICS.USER_DELETED,
-        {
-          userId: deletedUser.id,
-        },
-        context.correlationId,
-      );
+      await this.notifyUserDeleted(deletedUser.id, context);
 
       return deletedUser;
     } catch (error) {
@@ -276,5 +260,30 @@ export class UsersService {
       });
       throw new InternalServerErrorException('Failed to delete user');
     }
+  }
+
+  async notifyUserCreated(
+    userId: string,
+    email: string,
+    name: string,
+    context: Context,
+  ): Promise<void> {
+    await this.messagingService.publish(
+      USER_TOPICS.USER_CREATED,
+      {
+        userId,
+        email,
+        name,
+      },
+      context.correlationId,
+    );
+  }
+
+  async notifyUserDeleted(userId: string, context: Context): Promise<void> {
+    await this.messagingService.publish(
+      USER_TOPICS.USER_DELETED,
+      { userId },
+      context.correlationId,
+    );
   }
 }

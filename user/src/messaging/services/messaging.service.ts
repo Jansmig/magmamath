@@ -12,6 +12,7 @@ import * as amqp from 'amqplib';
 import type { MessagingConfig } from '../config/messaging.config';
 import { randomUUID } from 'crypto';
 
+// Note for reviewer: Ideally there would be a common library allowing exchange of messages using RabbitMQ. It would provide methods such as notify/public.
 @Injectable()
 export class MessagingService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(MessagingService.name);
@@ -33,13 +34,9 @@ export class MessagingService implements OnModuleInit, OnModuleDestroy {
     try {
       this.logger.log(`Connecting to RabbitMQ: ${this.config.rabbitmqUrl}`);
 
-      // Connect to RabbitMQ
       this.connection = await amqp.connect(this.config.rabbitmqUrl);
-
-      // Create channel
       this.channel = await this.connection.createChannel();
 
-      // Assert exchange exists
       await this.channel.assertExchange(
         this.config.exchange,
         this.config.exchangeType,
@@ -51,7 +48,6 @@ export class MessagingService implements OnModuleInit, OnModuleDestroy {
         `Successfully connected to RabbitMQ exchange: ${this.config.exchange}`,
       );
 
-      // Handle connection errors
       this.connection.on('error', (error: any) => {
         this.logger.error('RabbitMQ connection error:', error);
         this.isConnected = false;
