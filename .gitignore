@@ -9,6 +9,11 @@
 /user/build
 /user/tmp
 
+/notification/dist
+/notification/node_modules
+/notification/build
+/notification/tmp
+
 # Logs
 logs
 *.log
