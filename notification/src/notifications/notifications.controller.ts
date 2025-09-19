@@ -13,7 +13,7 @@ import {
 export class NotificationsController {
   @MessagePattern('user.created')
   async handleUserCreatedEvent(
-    @Payload() data: any,
+    @Payload() data: any, // please see the explanation why 'any' is used.
     @Ctx() rmqContext: RmqContext,
   ): Promise<void> {
     try {
@@ -29,7 +29,7 @@ export class NotificationsController {
 
   @MessagePattern('user.deleted')
   async handleUserDeletedEvent(
-    @Payload() data: any,
+    @Payload() data: any, // please see the explanation why 'any' is used.
     @Ctx() rmqContext: RmqContext,
   ): Promise<void> {
     try {

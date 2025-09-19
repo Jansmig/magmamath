@@ -52,7 +52,7 @@ GET http://localhost:3000/users/:user-id
 #### Get Many Users
 
 ```http
-GET http://localhost:3000/users?page=1
+GET http://localhost:3000/users?page=3&limit=2
 ```
 
 #### Update User

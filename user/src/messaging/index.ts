@@ -1,4 +1,3 @@
-export * from './interfaces/events.interface';
 export * from './services/messaging.service';
 export * from './config/messaging.config';
 export * from './messaging.module';
