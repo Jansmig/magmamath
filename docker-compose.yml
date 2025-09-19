@@ -1,0 +1,94 @@
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: magmamath-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: magmamath
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - magmamath-network
+
+  # RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: magmamath-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: password123
+      RABBITMQ_DEFAULT_VHOST: /
+    ports:
+      - "5672:5672" # AMQP port
+      - "15672:15672" # Management UI port
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - magmamath-network
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+
+  # User Microservice
+  user-service:
+    build:
+      context: ./user
+      dockerfile: Dockerfile
+    container_name: magmamath-user-service
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/magmamath?authSource=admin
+      - RABBITMQ_URL=amqp://admin:password123@rabbitmq:5672
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./user/src:/usr/src/app/src
+    depends_on:
+      - mongodb
+      - rabbitmq
+    networks:
+      - magmamath-network
+    command: npm run start:dev
+
+  # Notification Microservice
+  notification-service:
+    build:
+      context: ./notification
+      dockerfile: Dockerfile
+    container_name: magmamath-notification-service
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - RABBITMQ_URL=amqp://admin:password123@rabbitmq:5672
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./notification/src:/usr/src/app/src
+    depends_on:
+      - rabbitmq
+    networks:
+      - magmamath-network
+    command: npm run start:dev
+
+# Docker volumes for persistent data
+volumes:
+  mongodb_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
+
+# Docker network for inter-service communication
+networks:
+  magmamath-network:
+    driver: bridge
