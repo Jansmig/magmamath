@@ -49,6 +49,8 @@ services:
       - PORT=3000
       - MONGODB_URI=mongodb://admin:password123@mongodb:27017/magmamath?authSource=admin
       - RABBITMQ_URL=amqp://admin:password123@rabbitmq:5672
+      - RABBITMQ_EXCHANGE=magma
+      - RABBITMQ_EXCHANGE_TYPE=topic
     ports:
       - "3000:3000"
     volumes:

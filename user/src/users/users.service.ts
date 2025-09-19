@@ -16,13 +16,18 @@ import {
 } from './users.repository';
 import { UserMapper } from './mappers/user.mapper';
 import { User } from './domain/user';
+import { MessagingService } from '../messaging/services/messaging.service';
+import { USER_TOPICS } from '../messaging/topics/user.topics';
 
 // this could be configured in some config
 const DEFAULT_PAGE_LIMIT = 3;
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly messagingService: MessagingService,
+  ) {}
 
   async createUser(createUserDto: CreateUserDto): Promise<User> {
     try {
@@ -33,6 +38,13 @@ export class UsersService {
       }
 
       const newUser = await this.userRepository.create({ name, email });
+
+      await this.messagingService.publish(USER_TOPICS.USER_CREATED, {
+        userId: newUser.id,
+        email: newUser.email,
+        name: newUser.name,
+      });
+
       return newUser;
     } catch (error) {
       if (error instanceof BadRequestException) {
@@ -122,6 +134,11 @@ export class UsersService {
       if (!deletedUser) {
         throw new NotFoundException('User not found');
       }
+
+      await this.messagingService.publish(USER_TOPICS.USER_DELETED, {
+        userId: deletedUser.id,
+      });
+
       return deletedUser;
     } catch (error) {
       if (error instanceof NotFoundException) {

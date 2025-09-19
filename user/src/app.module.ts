@@ -3,6 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { UsersModule } from './users/users.module';
+import { MessagingModule } from './messaging/messaging.module';
 
 @Module({
   imports: [
@@ -10,6 +11,7 @@ import { UsersModule } from './users/users.module';
       process.env.MONGODB_URI ||
         'mongodb://admin:password123@mongodb:27017/magmamath?authSource=admin',
     ),
+    MessagingModule,
     UsersModule,
   ],
   controllers: [AppController],
