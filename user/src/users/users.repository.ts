@@ -15,6 +15,23 @@ export type UpdateUserInput = {
   email?: string;
 };
 
+export type PaginationOptions = {
+  page: number;
+  limit: number;
+};
+
+export type PaginatedResult<T> = {
+  data: T[];
+  metadata: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+};
+
 @Injectable()
 export class UserRepository {
   constructor(
@@ -52,5 +69,30 @@ export class UserRepository {
   async deleteById(id: string): Promise<User | null> {
     const result = await this.model.findByIdAndDelete(id).exec();
     return result ? UserMapper.fromDocumentToEntity(result) : null;
+  }
+
+  async findMany(options: PaginationOptions): Promise<PaginatedResult<User>> {
+    const { page, limit } = options;
+    const skip = (page - 1) * limit;
+
+    const [documents, total] = await Promise.all([
+      this.model.find().skip(skip).limit(limit).sort({ createdAt: -1 }).exec(),
+      this.model.countDocuments().exec(),
+    ]);
+
+    const users = documents.map((doc) => UserMapper.fromDocumentToEntity(doc));
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: users,
+      metadata: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+    };
   }
 }

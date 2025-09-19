@@ -9,9 +9,16 @@ import {
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserDocument } from './schemas/user.schema';
-import { UpdateUserInput, UserRepository } from './users.repository';
+import {
+  UpdateUserInput,
+  UserRepository,
+  PaginatedResult,
+} from './users.repository';
 import { UserMapper } from './mappers/user.mapper';
 import { User } from './domain/user';
+
+// this could be configured in some config
+const DEFAULT_PAGE_LIMIT = 3;
 
 @Injectable()
 export class UsersService {
@@ -49,6 +56,25 @@ export class UsersService {
       }
 
       throw new InternalServerErrorException('Failed to find user');
+    }
+  }
+
+  async findMany(page: number = 1): Promise<PaginatedResult<User>> {
+    try {
+      const limit = DEFAULT_PAGE_LIMIT;
+
+      if (page < 1) {
+        throw new BadRequestException('Page number must be greater than 0');
+      }
+
+      const result = await this.userRepository.findMany({ page, limit });
+      return result;
+    } catch (error) {
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException('Failed to retrieve users');
     }
   }
 

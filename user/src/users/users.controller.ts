@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -22,6 +23,17 @@ export class UsersController {
       success: true,
       message: 'User created successfully',
       data: user,
+    };
+  }
+
+  @Get()
+  async findMany(@Query('page') page?: string) {
+    const pageNumber = page ? parseInt(page, 10) : 1;
+    const result = await this.usersService.findMany(pageNumber);
+    return {
+      success: true,
+      message: 'Users retrieved successfully',
+      ...result,
     };
   }
 
